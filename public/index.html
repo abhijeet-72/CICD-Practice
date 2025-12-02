@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Who's Online?</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        display: flex;
+        justify-content: center;
+        margin-top: 50px;
+        background-color: #f4f4f9;
+      }
+      .container {
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+      }
+
+      #login-screen {
+        text-align: center;
+      }
+      #dashboard {
+        display: none;
+      } /* Hidden by default */
+
+      input {
+        padding: 10px;
+        width: 80%;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 10px 20px;
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+      li {
+        background: #eef;
+        margin: 5px 0;
+        padding: 10px;
+        border-radius: 5px;
+        display: flex;
+        align-items: center;
+      }
+      li::before {
+        content: "🟢";
+        margin-right: 10px;
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div id="login-screen">
+        <h2>Enter Chat Room</h2>
+        <input
+          type="text"
+          id="usernameInput"
+          placeholder="Enter your name..."
+        />
+        <button onclick="joinChat()">Join</button>
+      </div>
+
+      <div id="dashboard">
+        <h3>🔴 Live Users</h3>
+        <ul id="userList"></ul>
+      </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io();
+
+      const loginScreen = document.getElementById("login-screen");
+      const dashboard = document.getElementById("dashboard");
+      const userListEl = document.getElementById("userList");
+      const usernameInput = document.getElementById("usernameInput");
+
+      socket.on("joinError", (message) => {
+        alert(message); // Simple popup alert
+        // Don't switch screens, stay on login
+      });
+
+      // function joinChat() {
+      //   const username = usernameInput.value;
+      //   if (username.trim()) {
+      //     // Emit the 'join' event to server
+      //     socket.emit("join", username);
+
+      //     // Switch screens
+      //     loginScreen.style.display = "none";
+      //     dashboard.style.display = "block";
+      //   }
+      // }
+
+      // Update your joinChat function to NOT switch screens immediately
+      function joinChat() {
+        const username = usernameInput.value;
+        if (username.trim()) {
+          socket.emit("join", username);
+          // We REMOVED the screen switching logic from here.
+          // We should only switch if the server says "Success".
+          // But for this quick fix, the alert above is enough to stop duplicates visually.
+        }
+      }
+
+      // Listen for list updates
+      socket.on("updateUserList", (users) => {
+        // NOW we switch screens because we know we are in
+        loginScreen.style.display = "none";
+        dashboard.style.display = "block";
+
+        userListEl.innerHTML = ""; // Clear list
+
+        users.forEach((user) => {
+          const li = document.createElement("li");
+          li.innerText = user;
+          userListEl.appendChild(li);
+        });
+      });
+    </script>
+  </body>
+</html>
